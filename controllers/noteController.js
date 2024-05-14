@@ -1,6 +1,7 @@
 const { StatusCodes } = require('http-status-codes');
 
 const crypto = require('crypto');
+const mongoose = require('mongoose');
 
 
 const Note = require('./../model/note');
@@ -96,8 +97,102 @@ const deleteNote = async (req, res) => {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ error: "Internal server error" });
     }
 }
+// const updateNote = async (req, res) => {
+//     try {
+//         const { noteId } = req.params;
+//         const { title, description } = req.body;
+//         const user = req.user;
+//         const userId = user.id;
+//         // const paddedId = noteId.padStart(24, '0');
+//         // const objectId = new mongoose.Types.ObjectId(paddedId);
+//         // console.log(objectId);
+
+//         // Check if title and description are provided
+//         if (!title || !description) {
+//             return res.status(400).json({ isVerified: false, msg: 'Please provide all the fields' });
+//         }
+//         console.log(noteId.trim());
+
+//         // Find the note 
+//         const foundNote = await Note.findOne({ _id:noteId.trim() });
+
+//         // If note not found, return error
+//         if (!foundNote) {
+//             return res.status(404).json({ error: "Note not found" });
+//         }
+
+//         // Check if the note belongs to the authenticated user
+//         if (foundNote.user_id.toString() !== userId) {
+//             return res.status(403).json({ error: "Unauthorized access to update this note" });
+//         }
+
+//         // Update the note
+//         await Note.updateOne({ _id: noteId.trim() }, { title, description });
+
+//         return res.status(200).json({
+//             isVerified: true,
+//             msg: `Note updated successfully`,
+//             data: { title, description }
+//         });
+
+//     } catch (error) {
+//         console.error("Error updating note:", error);
+//         return res.status(500).json({
+//             isVerified: false,
+//             msg: 'Internal server error'
+//         });
+//     }
+// }
 
 
-module.exports = { createNote, readNote, deleteNote };
+const updateNote = async (req, res) => {
+    try {
+        const { noteId } = req.params;
+        const { title, description } = req.body;
+        const user = req.user;
+        const userId = user.id;
+
+        // Check if title and description are provided
+        if (!title || !description) {
+            return res.status(400).json({ isVerified: false, msg: 'Please provide all the fields' });
+        }
+
+        // Convert noteId to a valid ObjectId format
+        const objectId = new mongoose.Types.ObjectId(noteId);
+
+        // Find the note 
+        const foundNote = await Note.findOne({ _id: objectId });
+
+        // If note not found, return error
+        if (!foundNote) {
+            return res.status(404).json({ error: "Note not found" });
+        }
+
+        // Check if the note belongs to the authenticated user
+        if (foundNote.user_id.toString() !== userId) {
+            return res.status(403).json({ error: "Unauthorized access to update this note" });
+        }
+
+        // Update the note
+        await Note.updateOne({ _id: objectId }, { title, description });
+
+        return res.status(200).json({
+            isVerified: true,
+            msg: `Note updated successfully`,
+            data: { title, description }
+        });
+
+    } catch (error) {
+        console.error("Error updating note:", error);
+        return res.status(500).json({
+            isVerified: false,
+            msg: 'Internal server error'
+        });
+    }
+}
+
+
+
+module.exports = { createNote, readNote, deleteNote,updateNote };
 
 
